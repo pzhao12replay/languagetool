@@ -76,10 +76,9 @@ public class TokenAgreementAdjNounRuleTest {
     assertEquals(1, rule.match(langTool.getAnalyzedSentence("цинічна винахідливості")).length);
     assertEquals(1, rule.match(langTool.getAnalyzedSentence("наступній рік свого життя")).length);
     assertEquals(1, rule.match(langTool.getAnalyzedSentence("жодного кубічного метру в Україні не буде")).length);
-    assertEquals(1, rule.match(langTool.getAnalyzedSentence("складний рік на фондовим ринку")).length);
-    assertEquals(1, rule.match(langTool.getAnalyzedSentence("є найкращий засобом для очистки")).length);
+    assertEquals(1, rule.match(langTool.getAnalyzedSentence("кладний рік на фондовим ринку")).length);
     
-    // не працює через іменник "французька" (мова)
+    // не працює через іменник французька (мова)
 //    assertEquals(1, rule.match(langTool.getAnalyzedSentence("французька політик")).length);
 
     RuleMatch[] matches0 = rule.match(langTool.getAnalyzedSentence("4 російських винищувача"));
@@ -222,8 +221,6 @@ public class TokenAgreementAdjNounRuleTest {
     assertEmptyMatch("чотирициліндровий об’ємом 1000 куб. см.");
     assertEmptyMatch("10 жовтих площею 1,5 ");
     assertEmptyMatch("безплатні довжиною від 100 до 1000 метрів");
-
-    assertEmptyMatch("за метр кубічний води");
 
     // річних
     assertEmptyMatch("200% річних прибутку");
@@ -727,17 +724,6 @@ public class TokenAgreementAdjNounRuleTest {
     //TODO: turn back on when we can handle pron
 //    assertEquals(1, rule.match(langTool.getAnalyzedSentence("із такою самого зневагою")).length);
 //    assertEquals(1, rule.match(langTool.getAnalyzedSentence("на вибори само висуванцем")).length);
-  }
-  
-  @Test
-  public void testSpecialChars() throws IOException {
-    assertEmptyMatch("зелений поді\u00ADум");
-
-    RuleMatch[] matches = rule.match(langTool.getAnalyzedSentence("зелений по\u00ADділка."));
-    assertEquals(1, matches.length);
-
-    matches = rule.match(langTool.getAnalyzedSentence("зе\u00ADлений поділка."));
-    assertEquals(1, matches.length);
   }
   
   private void assertEmptyMatch(String text) throws IOException {

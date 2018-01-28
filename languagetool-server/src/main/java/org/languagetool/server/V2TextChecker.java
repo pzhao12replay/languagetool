@@ -38,8 +38,8 @@ class V2TextChecker extends TextChecker {
 
   private static final String JSON_CONTENT_TYPE = "application/json";
 
-  V2TextChecker(HTTPServerConfig config, boolean internalServer, Queue<Runnable> workQueue) {
-    super(config, internalServer, workQueue);
+  V2TextChecker(HTTPServerConfig config, boolean internalServer) {
+    super(config, internalServer);
   }
 
   @Override
@@ -48,10 +48,9 @@ class V2TextChecker extends TextChecker {
   }
 
   @Override
-  protected String getResponse(String text, Language lang, Language motherTongue, List<RuleMatch> matches,
-                               List<RuleMatch> hiddenMatches, String incompleteResultsReason) {
+  protected String getResponse(String text, Language lang, Language motherTongue, List<RuleMatch> matches, boolean incompleteResult) {
     RuleMatchesAsJsonSerializer serializer = new RuleMatchesAsJsonSerializer();
-    return serializer.ruleMatchesToJson(matches, hiddenMatches, text, CONTEXT_SIZE, lang, incompleteResultsReason);
+    return serializer.ruleMatchesToJson(matches, text, CONTEXT_SIZE, lang, incompleteResult);
   }
 
   @NotNull

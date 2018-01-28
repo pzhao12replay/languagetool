@@ -1,57 +1,20 @@
 # LanguageTool Change Log
 
-## 4.1-SNAPSHOT (release planned for 2018-03-27)
+## 4.0-SNAPSHOT (release planned for 2017-12-29)
 
 #### English
-  * added and improved rules
-  * added remaining collocation rules (~130) contributed by Nicholas Walker (Bokomaru)
-  * all-uppercase words are now also spellchecked
-  
-#### German
-  * added and improved rules
-  * New rule that checks coherent use of Du/du, Dich/dich etc. Assumes that the first
-    use has 'correct' capitalization and suggest the same capitalization for subsequent uses.
-  * New line extension '-*' for 'ignore.txt': entries ending with '*-' are ignored only if 
-    they are part of a hyphenated compound
-
-#### Portuguese
-  * added and improved rules
-
-
-## 4.0 (2017-12-29)
-
-#### Catalan
-  * added and improved rules
-  * updated and renamed dictionary: ca-ES.dict (external dependency: catalan-pos-dict 1.6)
-  * added new dictionary for Valencian including most words from Diccionari Normatiu Valencià (AVL): 
-    ca-ES-valencia.dict (external dependency: catalan-pos-dict 1.6)
-
-#### Dutch
-  * added and improved rules
-
-#### English
-  * added and improved rules
-  * removed the category `MISC` and moved the rules to more specific categories
-  * added WordCoherencyRule, to detect cases where two different variants of a word
-    are used in the same text (e.g. archaeology and archeology)
-  * added approximately 70 collocation rules contributed by Nicholas Walker (Bokomaru)
+  * removed the category MISC and moved the rules to more specific categories
+  * added WordCordCoherencyRule
   * added support for locale-specific spelling suggestions (locale-specific spelling_en-XY.txt files)
-  * updated en_GB spellchecker dictionary from https://github.com/marcoagpinto/aoo-mozilla-en-dict
-  * updated en_US spellchecker dictionary from http://wordlist.aspell.net (Version 2017.08.24)
-  * updated en_CA spellchecker dictionary from http://wordlist.aspell.net (Version 2017.08.24)
-  
-#### French
-  * LT now offers suggestions for spelling errors
 
 #### Galician
   * added and improved rules, including:
     - grammar: agreement rules added (only number and gender agreement)
-    - common normative errors: includes Castilianisms, Lusitanianisms, Hipergalicisms, archaisms and 
-      Anglicisms correction
+    - common normative errors: includes Castilianisms, Lusitanianisms, Hipergalicisms, archaisms and Anglicisms correction
     - style: barbarism, redundant expressions, and wordy expressions detection added
     - typography: spacing and number formatting improvements; chemical formulas; degree 
       signs; dashes; punctuation; international system standards; and mathematical symbol formatting
-  * development, punctuation and repetition rules categories added
+  * development and LibreOffice rules categories added
   * multiword disambiguation added
   * disambiguation improvements
   * new word tokenizer
@@ -67,18 +30,10 @@
 
 #### German
   * added and improved rules
-  * New rule that checks coherency of hyphen usage in compounds, e.g. it complains
-    when "Ärzteverband" and "Ärzte-Verband" are both used in the same text. While both
-    spellings are correct, it's probably a good idea to stick to one spelling.
   * improved POS tagging of hyphenated compounds (e.g., "CO2-arm" is recgonized as a variant of "arm")
-
-#### Polish
-  * added rules
-  * disambiguation improvements
 
 #### Portuguese
   * added and improved rules
-  * LibreOffice category rules moved to other categories
   * disambiguation improvements
   * updated Hunspell dictionaries to:
     - [pt-PT pos-AO] Dicionários Portugueses Complementares 2.2
@@ -86,72 +41,30 @@
     - [pt-MZ pre-AO] Dicionários Natura 14.08.2017
     
 #### Russian
-  * added and improved grammar and punctuation rules
-  * spelling dictionary update
-  * new Russian-English false friends added (thanks to ZakShaker)
+  * new false friends added (thanks to ZakShaker)
+  * added and improved some rules
 
 #### Serbian
   * initial support for Serbian by Zoltán Csala
 
-#### Ukrainian
-  * big dictionary update (~10K new lemmas)
-  * improvements in tokenization
-  * compound word tagging improvements
-  * more than 350 new disambiguation rules
-  * several new barbarism and grammar rules
-
 #### General
-  * Now runs with Java 9 (compilation with Maven still has issues with Java9)
-  * The spell checker tries harder to find suggestion for misspellings that have
-    a Levenshtein distance of larger than 2. The maximum Levenshtein distance is now 3.
-    This way you now get a suggestion for e.g. `algortherm` (algorithm) or `theromator` (thermometer).
-    In the worst case (every single word of a text misspelled), this has a performance
-    penalty of about 30%.
-  * Better support for Unicode codepoints greater than `0xFFFF`
-
-### word2vec
-  * word2vec word embeddings (cf. http://colah.github.io/posts/2014-07-NLP-RNNs-Representations/#word-embeddings)
-    are now supported as additional language models and currently available for
-    English, German, and Portuguese.
-  * Neural network based rules for confusion pair disambiguation using the
-    word2vec model are available for English, German, and Portuguese. The necessary
-    data must be downloaded separately from https://fscs.hhu.de/languagetool/word2vec.tar.gz.
-    For details, please see:
-    * Code: https://github.com/gulp21/languagetool-neural-network
-    * Forum discussion: https://forum.languagetool.org/t/neural-network-rules/2225
-    * Paper: "Development of neural network based rules for confusion set disambiguation in LanguageTool"
-      by Markus Brenneis and Sebastian Krings: https://fscs.hhu.de/languagetool/summary.pdf
+  * Now runs with Java 9 (compilation with Maven still has issue with Java9)
 
 #### GUI (stand-alone version)
   * show line numbers in the text area
-  * a directory with word2vec language model for neural network rules can now be
-    specified in the configuration dialog, see https://forum.languagetool.org/t/neural-network-rules/2225
 
 #### Java API
   * A `RuleMatch` can now have a URL, too. The URL usually points to a page that
     describes the error or grammar rule in more detail. Before, only the `Rule`
     could have a URL. A `RuleMatch` URL will overwrite the `Rule` URL in the
     JSON output.
-  * A `RuleMatch` now also has information about the sentence the error occurred in
-    (it used to have only position information and the caller was expected to find
-    the error context and/or sentence position in the original text).
 
-#### HTTP API / LT server
+#### LT server
   * change in configuration: `requestLimit` and `requestLimitPeriodInSeconds` now both
     need to be set for the limit to work
   * new property key `timeoutRequestLimit`: similar to `requestLimit`, but this one limits 
-    not all requests but blocks once this many timeouts have been caused by the IP in the
+    not all requests but blocks once this many timeout have been caused by the IP in the
     time span set by `requestLimitPeriodInSeconds`
-  * new property key `requestLimitInBytes`: similar to `requestLimit`, but this one limits
-    the aggregated size of requests caused by an IP in the time span set 
-    by `requestLimitPeriodInSeconds`
-  * New property key `maxErrorsPerWordRate`: set the maximum allowed errors per word, e.g.
-    `0.3` if the maximum is about one error per three words. More errors will stop the
-    check with an exception. This is useful so no processing time gets wasted for texts
-    with a huge amount of errors that are only caused by the wrong language being
-    selected (leading to most words being detected as spelling errors).
-  * The JSON output now contains a `sentence` property with the text of the sentence
-    the error occurred in.
 
 
 ## 3.9 (2017-09-26)

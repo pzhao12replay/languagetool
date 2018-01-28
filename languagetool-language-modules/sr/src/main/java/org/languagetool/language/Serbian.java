@@ -23,41 +23,32 @@ import org.languagetool.Language;
 import org.languagetool.LanguageMaintainedState;
 import org.languagetool.databroker.ResourceDataBroker;
 import org.languagetool.rules.*;
-import org.languagetool.rules.sr.ekavian.MorfologikEkavianSpellerRule;
-import org.languagetool.rules.sr.ekavian.SimpleGrammarEkavianReplaceRule;
-import org.languagetool.rules.sr.ekavian.SimpleStyleEkavianReplaceRule;
+import org.languagetool.rules.sr.MorfologikSerbianSpellerRule;
+import org.languagetool.rules.sr.SimpleGrammarReplaceRule;
+import org.languagetool.rules.sr.SimpleStyleReplaceRule;
 import org.languagetool.synthesis.Synthesizer;
-import org.languagetool.synthesis.sr.EkavianSynthesizer;
+import org.languagetool.synthesis.sr.SerbianSynthesizer;
 import org.languagetool.tagging.Tagger;
-import org.languagetool.tagging.disambiguation.Disambiguator;
-import org.languagetool.tagging.disambiguation.sr.SerbianHybridDisambiguator;
-import org.languagetool.tagging.sr.EkavianTagger;
+import org.languagetool.tagging.sr.SerbianTagger;
 import org.languagetool.tokenizers.SRXSentenceTokenizer;
 import org.languagetool.tokenizers.SentenceTokenizer;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
 /**
  * Support for Serbian language
- *
- * Attributes common to all Serbian dialects
- *
- * @author Zoltán Csala
- *
  * @since 4.0
  */
 public class Serbian extends Language {
 
-  private static final Language SERBIA_SERBIAN = new SerbianSerbian();
+  private static final Language SERBIA_SERBIAN = new SerbiaSerbian();
   
   private SentenceTokenizer sentenceTokenizer;
   private Tagger tagger;
   private Synthesizer synthesizer;
-  private Disambiguator disambiguator;
 
   // Grammar rules distributed over multiple .XML files
   // We want to keep our rules small and tidy.
@@ -97,14 +88,14 @@ public class Serbian extends Language {
   @Override
   public Contributor[] getMaintainers() {
     return new Contributor[]{
-            new Contributor("Золтан Чала (Csala, Zoltán)")
+            new Contributor("Золтан Чала (Csala Zoltán)")
     };
   }
 
   @Override
   public Tagger getTagger() {
     if (tagger == null) {
-      tagger = new EkavianTagger();
+      tagger = new SerbianTagger();
     }
     return tagger;
   }
@@ -112,17 +103,9 @@ public class Serbian extends Language {
   @Override
   public Synthesizer getSynthesizer() {
     if (synthesizer == null) {
-      synthesizer = new EkavianSynthesizer();
+      synthesizer = new SerbianSynthesizer();
     }
     return synthesizer;
-  }
-
-  @Override
-  public Disambiguator getDisambiguator() {
-    if (disambiguator == null) {
-      disambiguator = new SerbianHybridDisambiguator();
-    }
-    return disambiguator;
   }
 
   @Override
@@ -138,36 +121,29 @@ public class Serbian extends Language {
     return LanguageMaintainedState.ActivelyMaintained;
   }
 
-
-  // Rules common for all pronunciations of Serbian language
-  protected List<Rule> getBasicRules(ResourceBundle messages) {
-    return Arrays.asList(
-      new CommaWhitespaceRule(messages,
-        Example.wrong("Није шија<marker> ,</marker> него врат."),
-        Example.fixed("Није шија<marker>,</marker> него врат.")),
-      new DoublePunctuationRule(messages),
-      new GenericUnpairedBracketsRule(messages,
-        Arrays.asList("[", "(", "{", "„", "„", "\""),
-        Arrays.asList("]", ")", "}", "”", "“", "\"")),
-      new UppercaseSentenceStartRule(messages, this,
-        Example.wrong("Почела је школа. <marker>ђаци</marker> су поново сели у клупе."),
-        Example.fixed("Почела је школа. <marker>Ђаци</marker> су поново сели у клупе.")),
-      new MultipleWhitespaceRule(messages, this),
-      new SentenceWhitespaceRule(messages),
-      new WordRepeatRule(messages, this)
-    );
-  }
-
   @Override
   public List<Rule> getRelevantRules(ResourceBundle messages)
           throws IOException {
-    List<Rule> rules = new ArrayList<>(getBasicRules(messages));
-    rules.add(new MorfologikEkavianSpellerRule(messages, this));
-    rules.add(new SimpleGrammarEkavianReplaceRule(messages));
-    rules.add(new SimpleStyleEkavianReplaceRule(messages));
-    return rules;
+    return Arrays.asList(
+            new CommaWhitespaceRule(messages,
+                    Example.wrong("Није шија<marker> ,</marker> него врат."),
+                    Example.fixed("Није шија<marker>,</marker> него врат.")),
+            new DoublePunctuationRule(messages),
+            new GenericUnpairedBracketsRule(messages,
+                    Arrays.asList("[", "(", "{", "„", "„", "\""),
+                    Arrays.asList("]", ")", "}", "”", "“", "\"")),
+            new UppercaseSentenceStartRule(messages, this,
+                    Example.wrong("Почела је школа. <marker>деца</marker> су поново села у клупе."),
+                    Example.fixed("Почела је школа. <marker>Деца</marker> су поново села у клупе.")),
+            new MultipleWhitespaceRule(messages, this),
+            new SentenceWhitespaceRule(messages),
+            new WordRepeatRule(messages, this),
+            // Serbian-specific rules
+            new MorfologikSerbianSpellerRule(messages, this),
+            new SimpleGrammarReplaceRule(messages),
+            new SimpleStyleReplaceRule(messages)
+    );
   }
-
 
   @Override
   public List<String> getRuleFileNames() {

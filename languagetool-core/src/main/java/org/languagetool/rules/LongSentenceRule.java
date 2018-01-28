@@ -33,18 +33,23 @@ import org.languagetool.AnalyzedTokenReadings;
  */
 public class LongSentenceRule extends Rule {
 
-  private static final int DEFAULT_MAX_WORDS = 50;
-  private static final Pattern NON_WORD_REGEX = Pattern.compile("[.?!…:;,~’'\"„“”»«‚‘›‹()\\[\\]\\-–—*×∗·+÷/=]");
+  private static final int DEFAULT_MAX_WORDS = 40;
+  private static final Pattern NON_WORD_REGEX = Pattern.compile("[.?!…:;,~’'\"„“”»«‚‘›‹()\\[\\]\\-–—\\*×∗·\\+÷:\\/=]");
   private static final boolean DEFAULT_INACTIVE = false;
 
-  protected static int maxWords = DEFAULT_MAX_WORDS;
+  protected int maxWords;
 
   /**
+   * @param defaultActive allows default granularity
    * @since 3.7
    */
-  public LongSentenceRule(ResourceBundle messages, boolean defaultActive) {
+  public LongSentenceRule(ResourceBundle messages, int maxSentenceLength, boolean defaultActive) {
     super(messages);
     super.setCategory(Categories.STYLE.getCategory(messages));
+    if (maxSentenceLength <= 0) {
+      throw new IllegalArgumentException("maxSentenceLength must be > 0: " + maxSentenceLength);
+    }
+    maxWords = maxSentenceLength;
     if (!defaultActive) {
       setDefaultOff();
     }
@@ -52,10 +57,18 @@ public class LongSentenceRule extends Rule {
   }
 
   /**
-   * Creates a rule with default inactive
+   * @param maxSentenceLength the maximum sentence length that does not yet trigger a match
+   * @since 2.4
+   */
+  public LongSentenceRule(ResourceBundle messages, int maxSentenceLength) {
+    this(messages, maxSentenceLength, DEFAULT_INACTIVE);
+  }
+
+  /**
+   * Creates a rule with the default maximum sentence length (40 words).
    */
   public LongSentenceRule(ResourceBundle messages) {
-    this(messages, DEFAULT_INACTIVE);
+    this(messages, DEFAULT_MAX_WORDS, DEFAULT_INACTIVE);
   }
 
   @Override
@@ -63,35 +76,11 @@ public class LongSentenceRule extends Rule {
     return MessageFormat.format(messages.getString("long_sentence_rule_desc"), maxWords);
   }
 
-  /**
-   * Override this ID by adding a language acronym (e.g. TOO_LONG_SENTENCE_DE)
-   * to use adjustment of maxWords by option panel
-   * @since 4.1
-   */   
   @Override
   public String getId() {
-    return "TOO_LONG_SENTENCE";
+    return "TOO_LONG_SENTENCE_" + maxWords;
   }
 
-  /*
-   * set maximal Distance of words in number of sentences - note that this sets a static value
-   * that affects all instances of this rule!
-   * @since 4.1
-   */
-  @Override
-  public void setDefaultValue(int numWords) {
-    maxWords = numWords;
-  }
-  
-  /*
-   * get maximal Distance of words in number of sentences
-   * @since 4.1
-   */
-  @Override
-  public int getDefaultValue() {
-    return maxWords;
-  }
-  
   public String getMessage() {
 		return MessageFormat.format(messages.getString("long_sentence_rule_msg"), maxWords);
   }
@@ -115,7 +104,7 @@ public class LongSentenceRule extends Rule {
       }
     }
     if (numWords > maxWords) {
-      RuleMatch ruleMatch = new RuleMatch(this, sentence, 0, pos, msg);
+      RuleMatch ruleMatch = new RuleMatch(this, 0, pos, msg);
       ruleMatches.add(ruleMatch);
     }
     return toRuleMatchArray(ruleMatches);

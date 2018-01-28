@@ -33,12 +33,13 @@ import java.util.ResourceBundle;
  */
 public class LongSentenceRule extends org.languagetool.rules.LongSentenceRule {
 
-  private static final boolean DEFAULT_INACTIVE = false;
+  private static final int DEFAULT_MAX_WORDS = 40;
+  private static final boolean DEFAULT_INACTIVE = true;
 
   /**
    * @param defaultActive allows default granularity
    */
-  public LongSentenceRule(ResourceBundle messages, boolean defaultActive) {
+  public LongSentenceRule(ResourceBundle messages, int maxSentenceLength, boolean defaultActive) {
     super(messages);
     super.setCategory(Categories.STYLE.getCategory(messages));
     setLocQualityIssueType(ITSIssueType.Style);
@@ -47,28 +48,37 @@ public class LongSentenceRule extends org.languagetool.rules.LongSentenceRule {
     if (defaultActive) {
       setDefaultOn();
     }
+    maxWords = maxSentenceLength;
   }
 
   /**
-   * Creates a rule with the default Off
+   * @param maxSentenceLength the maximum sentence length that does not yet trigger a match
+   */
+  public LongSentenceRule(ResourceBundle messages, int maxSentenceLength) {
+    this(messages, maxSentenceLength, DEFAULT_INACTIVE);
+  }
+
+  /**
+   * Creates a rule with the default maximum sentence length (40 words).
    */
   public LongSentenceRule(ResourceBundle messages) {
-    this(messages, DEFAULT_INACTIVE);
+    this(messages, DEFAULT_MAX_WORDS, DEFAULT_INACTIVE);
+    setDefaultOn();
+  }
+
+  @Override
+  public String getId() {
+    return "DE_TOO_LONG_SENTENCE_" + maxWords;
   }
 
   @Override
   public String getDescription() {
-    return "Sehr langer Satz";
+    return "Sehr langer Satz (mehr als " + maxWords + " Wörter)";
   }
 
   @Override
   public String getMessage() {
     return "Dieser Satz ist sehr lang (mehr als " + maxWords + " Wörter).";
-  }
-
-  @Override
-  public String getId() {
-    return "TOO_LONG_SENTENCE_DE";
   }
 
   private boolean isWordCount(String tokenText) {
@@ -136,7 +146,7 @@ public class LongSentenceRule extends org.languagetool.rules.LongSentenceRule {
           }
           if (k < tokens.length) {
             if (numWordsInt > maxWords) {
-              RuleMatch ruleMatch = new RuleMatch(this, sentence, fromPosInt, toPosInt, msg);
+              RuleMatch ruleMatch = new RuleMatch(this, fromPosInt, toPosInt, msg);
               ruleMatches.add(ruleMatch);
             }
             for (i = k; i < tokens.length && !isWordCount(tokens[i].getToken()); i++) ;
@@ -151,7 +161,7 @@ public class LongSentenceRule extends org.languagetool.rules.LongSentenceRule {
       }
       if (numWords > maxWords) {
         for (int j = 0; j < fromPos.size(); j++) {
-          RuleMatch ruleMatch = new RuleMatch(this, sentence, fromPos.get(j), toPos.get(j), msg);
+          RuleMatch ruleMatch = new RuleMatch(this, fromPos.get(j), toPos.get(j), msg);
           ruleMatches.add(ruleMatch);
         }
       } else {

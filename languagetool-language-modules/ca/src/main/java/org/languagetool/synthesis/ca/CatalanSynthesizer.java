@@ -29,7 +29,6 @@ import morfologik.stemming.IStemmer;
 import morfologik.stemming.WordData;
 
 import org.languagetool.AnalyzedToken;
-import org.languagetool.Language;
 import org.languagetool.synthesis.BaseSynthesizer;
 
 /**
@@ -46,7 +45,10 @@ import org.languagetool.synthesis.BaseSynthesizer;
  * @author Jaume Ortolà i Font
  */
 public class CatalanSynthesizer extends BaseSynthesizer {
-  
+
+  private static final String RESOURCE_FILENAME = "/ca/catalan_synth.dict";
+  private static final String TAGS_FILE_NAME = "/ca/catalan_tags.txt";
+
   /** A special tag to add determiner (el, la, l', els, les). **/
   // private static final String ADD_DETERMINER = "DT";
 
@@ -69,8 +71,7 @@ public class CatalanSynthesizer extends BaseSynthesizer {
   private static final Pattern pVerb = Pattern.compile("V.*[CVBXYZ0123456]");
 
   public CatalanSynthesizer() {
-    super("/ca/ca-ES-valencia_synth.dict", 
-        "/ca/ca-ES-valencia_tags.txt");
+    super(RESOURCE_FILENAME, TAGS_FILE_NAME);
   }
 
   @Override

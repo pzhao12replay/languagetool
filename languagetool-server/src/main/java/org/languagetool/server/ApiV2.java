@@ -53,47 +53,35 @@ class ApiV2 {
 
   void handleRequest(String path, HttpExchange httpExchange, Map<String, String> parameters, ErrorRequestLimiter errorRequestLimiter, String remoteAddress) throws Exception {
     if (path.equals("languages")) {
-      handleLanguagesRequest(httpExchange);
+      String response = getLanguages();
+      ServerTools.setCommonHeaders(httpExchange, JSON_CONTENT_TYPE, allowOriginUrl);
+      httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.getBytes(ENCODING).length);
+      httpExchange.getResponseBody().write(response.getBytes(ENCODING));
     } else if (path.equals("check")) {
-      handleCheckRequest(httpExchange, parameters, errorRequestLimiter, remoteAddress);
+      AnnotatedText aText;
+      if (parameters.containsKey("text")) {
+        aText = new AnnotatedTextBuilder().addText(parameters.get("text")).build();
+      } else if (parameters.containsKey("data")) {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode data = mapper.readTree(parameters.get("data"));
+        aText = getAnnotatedText(data, data.get("text").asText());
+      } else {
+        throw new RuntimeException("Missing 'text' or 'data' parameter");
+      }
+      textChecker.checkText(aText, httpExchange, parameters, errorRequestLimiter, remoteAddress);
     } else if (path.equals("log")) {
-      handleLogRequest(httpExchange, parameters);
+      // used so the client (especially the browser add-ons) can report internal issues:
+      String message = parameters.get("message");
+      if (message != null && message.length() > 250) {
+        message = message.substring(0, 250) + "...";
+      }
+      ServerTools.print("Log message from client: " + message + " - User-Agent: " + httpExchange.getRequestHeaders().getFirst("User-Agent"));
+      String response = "OK";
+      httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.getBytes(ENCODING).length);
+      httpExchange.getResponseBody().write(response.getBytes(ENCODING));
     } else {
       throw new RuntimeException("Unsupported action: '" + path + "'");
     }
-  }
-
-  private void handleLanguagesRequest(HttpExchange httpExchange) throws IOException {
-    String response = getLanguages();
-    ServerTools.setCommonHeaders(httpExchange, JSON_CONTENT_TYPE, allowOriginUrl);
-    httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.getBytes(ENCODING).length);
-    httpExchange.getResponseBody().write(response.getBytes(ENCODING));
-  }
-
-  private void handleCheckRequest(HttpExchange httpExchange, Map<String, String> parameters, ErrorRequestLimiter errorRequestLimiter, String remoteAddress) throws Exception {
-    AnnotatedText aText;
-    if (parameters.containsKey("text")) {
-      aText = new AnnotatedTextBuilder().addText(parameters.get("text")).build();
-    } else if (parameters.containsKey("data")) {
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode data = mapper.readTree(parameters.get("data"));
-      aText = getAnnotatedText(data, data.get("text").asText());
-    } else {
-      throw new RuntimeException("Missing 'text' or 'data' parameter");
-    }
-    textChecker.checkText(aText, httpExchange, parameters, errorRequestLimiter, remoteAddress);
-  }
-
-  private void handleLogRequest(HttpExchange httpExchange, Map<String, String> parameters) throws IOException {
-    // used so the client (especially the browser add-ons) can report internal issues:
-    String message = parameters.get("message");
-    if (message != null && message.length() > 250) {
-      message = message.substring(0, 250) + "...";
-    }
-    ServerTools.print("Log message from client: " + message + " - User-Agent: " + httpExchange.getRequestHeaders().getFirst("User-Agent"));
-    String response = "OK";
-    httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.getBytes(ENCODING).length);
-    httpExchange.getResponseBody().write(response.getBytes(ENCODING));
   }
 
   private AnnotatedText getAnnotatedText(JsonNode data, String text) {
@@ -120,7 +108,7 @@ class ApiV2 {
     try (JsonGenerator g = factory.createGenerator(sw)) {
       g.writeStartArray();
       List<Language> languages = new ArrayList<>(Languages.get());
-      languages.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
+      Collections.sort(languages, (o1, o2) -> o1.getName().compareTo(o2.getName()));
       for (Language lang : languages) {
         g.writeStartObject();
         g.writeStringField("name", lang.getName());

@@ -90,7 +90,6 @@ biographisch;biografisch
 Blitzlichtphoto;Blitzlichtfoto
 Blitzlichtphotographie;Blitzlichtfotografie
 Blumenphoto;Blumenfoto
-Blu-ray;Blu-Ray
 Bodengeographie;Bodengeografie
 Bouquet;Bukett
 Bouquets;Buketts

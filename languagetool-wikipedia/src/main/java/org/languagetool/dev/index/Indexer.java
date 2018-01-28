@@ -56,8 +56,6 @@ public class Indexer implements AutoCloseable {
   private final IndexWriter writer;
   private final SentenceTokenizer sentenceTokenizer;
 
-  private boolean lowercaseOnly;
-
   public Indexer(Directory dir, Language language) {
     this(dir, language, getAnalyzer(language));
   }
@@ -73,13 +71,6 @@ public class Indexer implements AutoCloseable {
     }
   }
 
-  /**
-   * Set to true to index only a lowercase field (makes index smaller).
-   */
-  public void setLowercaseOnly(boolean lowercaseOnly) {
-    this.lowercaseOnly = lowercaseOnly;
-  }
-  
   public static void main(String[] args) throws IOException {
     ensureCorrectUsageOrExit(args);
     run(args[0], args[1], args[2]);
@@ -178,9 +169,7 @@ public class Indexer implements AutoCloseable {
     type.setStored(true);
     type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
     type.setTokenized(true);
-    if (!lowercaseOnly) {
-      doc.add(new Field(FIELD_NAME, sentence, type));
-    }
+    doc.add(new Field(FIELD_NAME, sentence, type));
     doc.add(new Field(FIELD_NAME_LOWERCASE, sentence, type));
     if (docCount != -1) {
       FieldType countType = new FieldType();
@@ -210,7 +199,4 @@ public class Indexer implements AutoCloseable {
     writer.close();
   }
 
-  public void commit() throws IOException {
-    writer.commit();
-  }
 }

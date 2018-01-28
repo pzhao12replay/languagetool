@@ -19,7 +19,6 @@
 package org.languagetool.server;
 
 import com.sun.net.httpserver.HttpExchange;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.languagetool.*;
 import org.languagetool.gui.Configuration;
@@ -45,8 +44,7 @@ import static org.languagetool.server.ServerTools.print;
 abstract class TextChecker {
 
   protected abstract void setHeaders(HttpExchange httpExchange);
-  protected abstract String getResponse(String text, Language lang, Language motherTongue, List<RuleMatch> matches,
-                                        List<RuleMatch> hiddenMatches, String incompleteResultReason);
+  protected abstract String getResponse(String text, Language lang, Language motherTongue, List<RuleMatch> matches, boolean incompleteResult);
   @NotNull
   protected abstract List<String> getPreferredVariants(Map<String, String> parameters);
   protected abstract Language getLanguage(String text, Map<String, String> parameters, List<String> preferredVariants);
@@ -65,15 +63,13 @@ abstract class TextChecker {
   
   private final Map<String,Integer> languageCheckCounts = new HashMap<>(); 
   private final boolean internalServer;
-  private Queue<Runnable> workQueue;
   private final LanguageIdentifier identifier;
   private final ExecutorService executorService;
   private final ResultCache cache;
 
-  TextChecker(HTTPServerConfig config, boolean internalServer, Queue<Runnable> workQueue) {
+  TextChecker(HTTPServerConfig config, boolean internalServer) {
     this.config = config;
     this.internalServer = internalServer;
-    this.workQueue = workQueue;
     this.identifier = new LanguageIdentifier();
     this.executorService = Executors.newCachedThreadPool();
     this.cache = config.getCacheSize() > 0 ? new ResultCache(config.getCacheSize()) : null;
@@ -95,13 +91,6 @@ abstract class TextChecker {
     boolean autoDetectLanguage = getLanguageAutoDetect(parameters);
     List<String> preferredVariants = getPreferredVariants(parameters);
     Language lang = getLanguage(aText.getPlainText(), parameters, preferredVariants);
-    Integer count = languageCheckCounts.get(lang.getShortCodeWithCountryAndVariant());
-    if (count == null) {
-      count = 1;
-    } else {
-      count++;
-    }
-    //print("Starting check: " + aText.getPlainText().length() + " chars, #" + count);
     String motherTongueParam = parameters.get("motherTongue");
     Language motherTongue = motherTongueParam != null ? Languages.getLanguageForShortCode(motherTongueParam) : null;
     boolean useEnabledOnly = "yes".equals(parameters.get("enabledOnly")) || "true".equals(parameters.get("enabledOnly"));
@@ -124,14 +113,6 @@ abstract class TextChecker {
     QueryParams params = new QueryParams(enabledRules, disabledRules, enabledCategories, disabledCategories, useEnabledOnly, useQuerySettings, allowIncompleteResults);
 
     List<RuleMatch> ruleMatchesSoFar = Collections.synchronizedList(new ArrayList<>());
-    
-    Future<List<RemoteRuleMatch>> hiddenMatchesFuture = null;
-    ResultExtender resultExtender = null;
-    if (config.getHiddenMatchesServer() != null && config.getHiddenMatchesLanguages().contains(lang)) {
-      resultExtender = new ResultExtender(config.getHiddenMatchesServer(), config.getHiddenMatchesServerTimeout());
-      hiddenMatchesFuture = resultExtender.getExtensionMatches(aText.getPlainText(), lang);
-    }
-
     Future<List<RuleMatch>> future = executorService.submit(new Callable<List<RuleMatch>>() {
       @Override
       public List<RuleMatch> call() throws Exception {
@@ -142,7 +123,7 @@ abstract class TextChecker {
         return getRuleMatches(aText, lang, motherTongue, params, f -> ruleMatchesSoFar.add(f));
       }
     });
-    String incompleteResultReason = null;
+    boolean incompleteResult = false;
     List<RuleMatch> matches;
     if (limits.getMaxCheckTimeMillis() < 0) {
       matches = future.get();
@@ -150,11 +131,7 @@ abstract class TextChecker {
       try {
         matches = future.get(limits.getMaxCheckTimeMillis(), TimeUnit.MILLISECONDS);
       } catch (ExecutionException e) {
-        if (params.allowIncompleteResults && ExceptionUtils.getRootCause(e) instanceof ErrorRateTooHighException) {
-          print(e.getMessage() + " - returning " + ruleMatchesSoFar.size() + " matches found so far");
-          matches = new ArrayList<>(ruleMatchesSoFar);  // threads might still be running, so make a copy
-          incompleteResultReason = "Results are incomplete: " + ExceptionUtils.getRootCause(e).getMessage();
-        } else if (e.getCause() != null && e.getCause() instanceof OutOfMemoryError) {
+        if (e.getCause() != null && e.getCause() instanceof OutOfMemoryError) {
           throw (OutOfMemoryError)e.getCause();
         } else {
           throw e;
@@ -168,13 +145,12 @@ abstract class TextChecker {
         }
         String message = "Text checking took longer than allowed maximum of " + limits.getMaxCheckTimeMillis() +
                          " milliseconds (cancelled: " + cancelled +
-                         ", language: " + lang.getShortCodeWithCountryAndVariant() + ", #" + count +
+                         ", language: " + lang.getShortCodeWithCountryAndVariant() +
                          ", " + aText.getPlainText().length() + " characters of text, system load: " + loadInfo + ")";
         if (params.allowIncompleteResults) {
           print(message + " - returning " + ruleMatchesSoFar.size() + " matches found so far");
-          matches = new ArrayList<>(ruleMatchesSoFar);  // threads might still be running, so make a copy
-          incompleteResultReason = "Results are incomplete: text checking took longer than allowed maximum of " + 
-                  String.format(Locale.ENGLISH, "%.2f", limits.getMaxCheckTimeMillis()/1000.0) + " seconds";
+          matches = new ArrayList<>(ruleMatchesSoFar);  // threads might still be running it seems, so make a copy
+          incompleteResult = true;
         } else {
           throw new RuntimeException(message, e);
         }
@@ -182,19 +158,7 @@ abstract class TextChecker {
     }
 
     setHeaders(httpExchange);
-    List<RuleMatch> hiddenMatches = new ArrayList<>();
-    if (resultExtender != null) {
-      try {
-        List<RemoteRuleMatch> tmpHiddenMatches = hiddenMatchesFuture.get(config.getHiddenMatchesServerTimeout(), TimeUnit.MILLISECONDS);
-        hiddenMatches = resultExtender.getFilteredExtensionMatches(matches, tmpHiddenMatches);
-      } catch (TimeoutException e) {
-        print("Warn: Failed to query hidden matches server at " + config.getHiddenMatchesServer() +
-              " due to timeout (" + config.getHiddenMatchesServerTimeout() + "ms): " + e.getMessage());
-      } catch (Exception e) {
-        print("Warn: Failed to query hidden matches server at " + config.getHiddenMatchesServer() + ": " + e.getMessage());
-      }
-    }
-    String response = getResponse(aText.getPlainText(), lang, motherTongue, matches, hiddenMatches, incompleteResultReason);
+    String response = getResponse(aText.getPlainText(), lang, motherTongue, matches, incompleteResult);
     String messageSent = "sent";
     String languageMessage = lang.getShortCodeWithCountryAndVariant();
     String referrer = httpExchange.getRequestHeaders().getFirst("Referer");
@@ -212,11 +176,17 @@ abstract class TextChecker {
       languageMessage += "[auto]";
     }
     String agent = parameters.get("useragent") != null ? parameters.get("useragent") : "-";
+    Integer count = languageCheckCounts.get(lang.getShortCodeWithCountryAndVariant());
+    if (count == null) {
+      count = 1;
+    } else {
+      count++;
+    }
     languageCheckCounts.put(lang.getShortCodeWithCountryAndVariant(), count);
     print("Check done: " + aText.getPlainText().length() + " chars, " + languageMessage + ", #" + count + ", " + referrer + ", "
             + matches.size() + " matches, "
             + (System.currentTimeMillis() - timeStart) + "ms, agent:" + agent
-            + ", " + messageSent + ", q:" + (workQueue != null ? workQueue.size() : "?"));
+            + ", " + messageSent);
   }
 
   private UserLimits getUserLimits(Map<String, String> params) {
@@ -238,7 +208,7 @@ abstract class TextChecker {
 
   private List<RuleMatch> getRuleMatches(AnnotatedText aText, Language lang,
                                          Language motherTongue, QueryParams params, RuleMatchListener listener) throws Exception {
-    if (cache != null && cache.requestCount() > 0 && cache.requestCount() % CACHE_STATS_PRINT == 0) {
+    if (cache != null && cache.requestCount() % CACHE_STATS_PRINT == 0) {
       String hitPercentage = String.format(Locale.ENGLISH, "%.2f", cache.hitRate() * 100.0f);
       print("Cache stats: " + hitPercentage + "% hit rate");
     }
@@ -300,12 +270,8 @@ abstract class TextChecker {
    */
   private JLanguageTool getLanguageToolInstance(Language lang, Language motherTongue, QueryParams params) throws Exception {
     JLanguageTool lt = new JLanguageTool(lang, motherTongue, cache);
-    lt.setMaxErrorsPerWordRate(config.getMaxErrorsPerWordRate());
     if (config.getLanguageModelDir() != null) {
       lt.activateLanguageModelRules(config.getLanguageModelDir());
-    }
-    if (config.getWord2VecModelDir () != null) {
-      lt.activateWord2VecModelRules(config.getWord2VecModelDir());
     }
     if (config.getRulesConfigFile() != null) {
       configureFromRulesFile(lt, lang);

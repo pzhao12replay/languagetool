@@ -2,7 +2,10 @@ package org.languagetool.rules.uk;
 
 import java.util.*;
 
-import org.languagetool.*;
+import org.languagetool.AnalyzedToken;
+import org.languagetool.AnalyzedTokenReadings;
+import org.languagetool.JLanguageTool;
+import org.languagetool.Language;
 import org.languagetool.rules.RuleMatch;
 import org.languagetool.rules.WordRepeatRule;
 import org.languagetool.tagging.uk.IPOSTag;
@@ -13,10 +16,10 @@ import org.languagetool.tagging.uk.PosTagHelper;
  */
 public class UkrainianWordRepeatRule extends WordRepeatRule {
   private static final HashSet<String> REPEAT_ALLOWED_SET = new HashSet<>(
-      Arrays.asList("ст.")
+      Arrays.asList("що", "ні", "одне", "ось", "ст.")
   );
   private static final HashSet<String> REPEAT_ALLOWED_CAPS_SET = new HashSet<>(
-      Arrays.asList("Джей", "Бі", "Сі")
+      Arrays.asList("ПРО", "Джей", "Ді")
   );
 
   public UkrainianWordRepeatRule(ResourceBundle messages, Language language) {
@@ -34,24 +37,10 @@ public class UkrainianWordRepeatRule extends WordRepeatRule {
     String token = analyzedTokenReadings.getToken();
     
     // від добра добра не шукають
-    if( position > 2 
-        && token.equals("добра")
+    if( position > 1 && token.equals("добра")
         && tokens[position-2].getToken().equalsIgnoreCase("від") )
       return true;
     
-    // Тому що що?
-    if( position > 1 
-        && token.equals("що")
-        && tokens[position-2].getToken().equalsIgnoreCase("тому") )
-      return true;
-
-    // ні так, ні ні
-    if( position > 3
-        && token.equals("ні")
-        && tokens[position-2].getToken().equals(",")
-        && tokens[position-3].getToken().equalsIgnoreCase("так") )
-      return true;
-
     if( REPEAT_ALLOWED_SET.contains(token.toLowerCase()) )
       return true;
 
@@ -81,13 +70,13 @@ public class UkrainianWordRepeatRule extends WordRepeatRule {
   }
 
   @Override
-  protected RuleMatch createRuleMatch(String prevToken, String token, int prevPos, int pos, String msg, AnalyzedSentence sentence) {
+  protected RuleMatch createRuleMatch(String prevToken, String token, int prevPos, int pos, String msg) {
     boolean doubleI = prevToken.equals("І") && token.equals("і");
     if( doubleI ) {
       msg += " або, можливо, перша І має бути латинською.";
     }
     
-    RuleMatch ruleMatch = super.createRuleMatch(prevToken, token, prevPos, pos, msg, sentence);
+    RuleMatch ruleMatch = super.createRuleMatch(prevToken, token, prevPos, pos, msg);
 
     if( doubleI ) {
       List<String> replacements = new ArrayList<>(ruleMatch.getSuggestedReplacements());

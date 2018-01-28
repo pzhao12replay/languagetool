@@ -80,12 +80,11 @@ public class MultipleWhitespaceRule extends Rule {
         }
         String message = messages.getString("whitespace_repetition");
         if (prevLen > 1) {
-          String text = sentence.getText();
-          if (prevPos >= 2 && pos + prevLen <= text.length() && text.substring(prevPos-2, pos + prevLen).equals("-- \n")) {
+          if (prevPos >= 2 && sentence.getText().substring(prevPos-2, pos + prevLen).equals("-- \n")) {
             // no match for typical email signature delimiter
             continue;
           }
-          RuleMatch ruleMatch = new RuleMatch(this, sentence, prevPos, pos + prevLen, message);
+          RuleMatch ruleMatch = new RuleMatch(this, prevPos, pos + prevLen, message);
           ruleMatch.setSuggestedReplacement(" ");
           ruleMatches.add(ruleMatch);
         }

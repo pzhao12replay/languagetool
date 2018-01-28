@@ -48,13 +48,15 @@ public class RussianVerbConjugationRuleTest {
         JLanguageTool lt = new JLanguageTool(new Russian());
 
         for (String sentence : wrongSentences) {
+            System.out.println(sentence);
             AnalyzedSentence analyzedSentence = lt.getAnalyzedSentence(sentence);
-            assertEquals("Expected error in sentence: " + sentence, 1, rule.match(analyzedSentence).length);
+            assertEquals(1, rule.match(analyzedSentence).length);
         }
 
         for(String sentence : rightSentences) {
+            System.out.println(sentence);
             AnalyzedSentence analyzedSentence = lt.getAnalyzedSentence(sentence);
-            assertEquals("Did not expect error in sentence: " + sentence, 0, rule.match(analyzedSentence).length);
+            assertEquals(0, rule.match(analyzedSentence).length);
         }
     }
 }

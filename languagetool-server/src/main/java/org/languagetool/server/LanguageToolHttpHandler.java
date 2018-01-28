@@ -20,11 +20,8 @@ package org.languagetool.server;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.languagetool.ErrorRateTooHighException;
 import org.languagetool.tools.StringTools;
 
 import java.io.IOException;
@@ -61,7 +58,7 @@ class LanguageToolHttpHandler implements HttpHandler {
     } else {
       this.ownIps = new HashSet<>();
     }
-    this.textCheckerV2 = new V2TextChecker(config, internal, workQueue);
+    this.textCheckerV2 = new V2TextChecker(config, internal);
   }
 
   /** @since 2.6 */
@@ -81,20 +78,22 @@ class LanguageToolHttpHandler implements HttpHandler {
       // not an error but may make the underlying TCP connection unusable for following exchanges.",
       // so we consume the request now, even before checking for request limits:
       parameters = getRequestQuery(httpExchange, requestedUri);
-      if (requestLimiter != null) {
-        try {
-          requestLimiter.checkAccess(remoteAddress, parameters);
-        } catch (TooManyRequestsException e) {
-          String errorMessage = "Error: Access from " + remoteAddress + " denied: " + e.getMessage();
-          sendError(httpExchange, HttpURLConnection.HTTP_FORBIDDEN, errorMessage);
-          print(errorMessage + " - useragent: " + parameters.get("useragent") +
-                  " - HTTP UserAgent: " + getHttpUserAgent(httpExchange));
-          return;
-        }
+      if (requestLimiter != null && !requestLimiter.isAccessOkay(remoteAddress)) {
+        String text = parameters.get("text");
+        String textSizeMessage = text != null ? " Text size: " + text.length() + "." :  "";
+        String errorMessage = "Error: Access from " + remoteAddress + " denied - too many requests." +
+                textSizeMessage +
+                " Allowed maximum requests: " + requestLimiter.getRequestLimit() +
+                " requests per " + requestLimiter.getRequestLimitPeriodInSeconds() + " seconds";
+        sendError(httpExchange, HttpURLConnection.HTTP_FORBIDDEN, errorMessage);
+        print(errorMessage + " - useragent: " + parameters.get("useragent") +
+              " - HTTP UserAgent: " + getHttpUserAgent(httpExchange));
+        return;
       }
       if (errorRequestLimiter != null && !errorRequestLimiter.wouldAccessBeOkay(remoteAddress)) {
-        String textSizeMessage = getTextOrDataSizeMessage(parameters);
-        String errorMessage = "Error: Access from " + remoteAddress + " denied - too many recent timeouts. " +
+        String text = parameters.get("text");
+        String textSizeMessage = text != null ? " Text size: " + text.length() + "." :  "";
+        String errorMessage = "Error: Access from " + remoteAddress + " denied - too many recent timeouts." +
                 textSizeMessage +
                 " Allowed maximum timeouts: " + errorRequestLimiter.getRequestLimit() +
                 " per " + errorRequestLimiter.getRequestLimitPeriodInSeconds() + " seconds";
@@ -116,12 +115,11 @@ class LanguageToolHttpHandler implements HttpHandler {
           apiV2.handleRequest(pathWithoutVersion, httpExchange, parameters, errorRequestLimiter, remoteAddress);
         } else if (requestedUri.getRawPath().endsWith("/Languages")) {
           throw new IllegalArgumentException("You're using an old version of our API that's not supported anymore. Please see https://languagetool.org/http-api/migration.php");
-        } else if (requestedUri.getRawPath().equals("/")) {
-          throw new IllegalArgumentException("Missing arguments for LanguageTool API. Please see https://languagetool.org/http-api/swagger-ui/#/default");
-        } else if (requestedUri.getRawPath().contains("/v2/")) {
-          throw new IllegalArgumentException("You have '/v2/' in your path, but not at the root. Try an URL like 'http://server/v2/...' ");
         } else {
-          throw new IllegalArgumentException("Seems like you're using an old version of our API that's not supported anymore. Please see https://languagetool.org/http-api/migration.php");
+          if (requestedUri.getRawPath().contains("/v2/")) {
+            throw new IllegalArgumentException("You have '/v2/' in your path, but not at the root. Try an URL like 'http://server/v2/...' ");
+          }
+          throw new IllegalArgumentException("You're using an old version of our API that's not supported anymore. Please see https://languagetool.org/http-api/migration.php");
         }
       } else {
         String errorMessage = "Error: Access from " + StringTools.escapeXML(origAddress) + " denied";
@@ -137,11 +135,7 @@ class LanguageToolHttpHandler implements HttpHandler {
         errorCode = HttpURLConnection.HTTP_ENTITY_TOO_LARGE;
         response = e.getMessage();
         logStacktrace = false;
-      } else if (ExceptionUtils.getRootCause(e) instanceof ErrorRateTooHighException) {
-        errorCode = HttpURLConnection.HTTP_BAD_REQUEST;
-        response = ExceptionUtils.getRootCause(e).getMessage();
-        logStacktrace = false;
-      } else if (e instanceof AuthException || e.getCause() != null && e.getCause() instanceof AuthException) {
+      } else if (e instanceof AuthException ||  e.getCause() != null && e.getCause() instanceof AuthException) {
         errorCode = HttpURLConnection.HTTP_FORBIDDEN;
         response = e.getMessage();
       } else if (e instanceof IllegalArgumentException) {
@@ -161,20 +155,6 @@ class LanguageToolHttpHandler implements HttpHandler {
     } finally {
       httpExchange.close();
     }
-  }
-
-  @NotNull
-  private String getTextOrDataSizeMessage(Map<String, String> parameters) {
-    String text = parameters.get("text");
-    if (text != null) {
-      return "Text size: " + text.length() + ".";
-    } else {
-      String data = parameters.get("data");
-      if (data != null) {
-        return "Data size: " + data.length() + ".";
-      }
-    }
-    return "";
   }
 
   private void logError(String remoteAddress, Exception e, int errorCode, HttpExchange httpExchange, Map<String, String> params, 

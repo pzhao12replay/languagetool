@@ -21,21 +21,17 @@ package org.languagetool.synthesis.sr;
 import org.languagetool.synthesis.BaseSynthesizer;
 
 /**
- * Serbian generic word form synthesizer
+ * Serbian word form synthesizer
  *
  * @author Zoltan Csala
  * @since 4.0
  */
 public class SerbianSynthesizer extends BaseSynthesizer {
 
-  protected static final String DICTIONARY_PATH = "/sr/dictionary/";
-  protected static final String TAGS_FILE_NAME = DICTIONARY_PATH + "serbian_synth_tags.txt";
+  private static final String RESOURCE_FILENAME = "/sr/serbian_synth.dict";
+  private static final String TAGS_FILE_NAME = "/sr/serbian_synth_tags.txt";
 
-  /**
-   * @param resourceFileName The dictionary file name.
-   * @param tagFileName      The name of a file containing all possible tags.
-   */
-  public SerbianSynthesizer(String resourceFileName, String tagFileName) {
-    super(resourceFileName, tagFileName);
+  public SerbianSynthesizer() {
+    super(RESOURCE_FILENAME, TAGS_FILE_NAME);
   }
 }

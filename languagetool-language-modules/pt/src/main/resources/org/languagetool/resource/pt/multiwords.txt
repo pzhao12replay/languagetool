@@ -708,14 +708,8 @@ uma vez que	CS
 Uma vez que	CS
 uma vez	RG
 Uma vez	RG
-um bocado	RG
-Um bocado	RG
-um bocadinho	RG
-Um bocadinho	RG
 um pouco	RG
 Um pouco	RG
-um pouquinho	RG
-Um pouquinho	RG
 um tanto	RG
 Um tanto	RG
 visto que	CS
@@ -2602,9 +2596,6 @@ Hyperoodon ampullatus	NPCN000_
 Hyperoodon planifrons	NPCN000_
 Hyperoodon sp	NPCN000_
 Hyperoodon spp	NPCN000_
-Ictalurus punctatus	NPCN000_
-Ictalurus sp	NPCN000_
-Ictalurus spp	NPCN000_
 Ichthyophthirius multifiliis	NPCN000_
 Ichthyophthirius sp	NPCN000_
 Ichthyophthirius spp	NPCN000_
@@ -10750,7 +10741,6 @@ América do Sul	NPFSG00_
 Angela Merkel	NPFS000_
 Angelina Jolie	NPFS000_
 Anna Karenina	NPFS000_
-arroz basmati	NCMS000
 arroz cateto	NCMS000
 Arroz cateto	NCMS000
 arroz parboilizado	NCMS000
@@ -10772,7 +10762,6 @@ batata rosti	NCFS000
 Batata rosti	NCFS000
 bifinhos à salsicheiro	NCMP000
 Bifinhos à salsicheiro	NCMP000
-Bitcoin Cash	NPMS000_
 Bob Marley	NPMSO00_
 Booker Prize	NPMSO00_
 bosão de Higgs	NCMS000
@@ -10844,11 +10833,9 @@ El Salvador	NPMS000_
 endereços IP	NCMP000
 Enrique Peña	NPMS000_
 Estado da União	NCMS000
-estudantes Erasmus	NCCP000
 Evo Morales	NPMS000_
 faixa BUS	NCFS000
 faixas BUS	NCFP000
-Feng Shui	NPMS000_
 Ferenc Liszt	NPMS000_
 Fidel Castro	NPMS000_
 foie gras	NCFS000
@@ -10893,7 +10880,6 @@ Lex Luthor	NPMS000_
 Lucky Luke	NPMS000_
 Luís Maria	NPMSO00_
 Luís Santos	NPMSO00_
-Luís Sepúlveda	NPMS000_
 Luke Cage	NPMS000_
 Madame Bovary	NPFS000_
 Mahatma Gandhi	NPMS000_
@@ -10918,7 +10904,6 @@ Monte Aconcágua	NPMSO00_
 Mossos d'Esquadra	NPMP000_
 nasi goreng	NCMS000
 National Geographic	NPFSO00_
-navios fantasma	NCMP000
 Nazaré Challenge	NPMS000_
 Nicolás Maduro	NPMS000_
 Nikola Tesla	NPMS000_
@@ -10953,7 +10938,6 @@ raios Gama	NCMP000
 raios gama	NCMP000
 Raspberry Pi	NPMS000_
 Raúl Castro	NPMS000_
-rede social Facebook	NPMF000_
 Reggio Calabria	NPMS000_
 René Descartes	NPMS000_
 República Centro-Africana	NPFS000_
@@ -10965,10 +10949,8 @@ Rio Grande do Sul	NPMSG00_
 Robert Zemeckis	NPMS000_
 Roland Garros	NPMS000_
 Ron Howard	NPMS000_
-Saadeddine El Othmani	NPMS000_
 Salvador Dalí	NPMS000_
 Santos Romão	NPMSO00_
-Satoshi Nakamoto	NPMS000_
 Scientific Reports	NPFS000_
 seguro multirriscos	NCMS000
 Senhora de Lourdes	NPFS000_

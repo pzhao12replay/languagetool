@@ -11,9 +11,6 @@ aufstarteten
 aufstartetest
 aufzustarten
 Einbusse/N
-Kassier/S
-Kassierin
-Kassierinnen
 Limite/N
 Pärke/N
 Schweizerbürger/NS
@@ -22,5 +19,3 @@ Schweizerbürgerinnen
 Schweizerbürgerrecht/S
 Trottinett/S
 Trottinette/N
-Halbtaxabonnement/S
-Halbtaxabonnemente/N

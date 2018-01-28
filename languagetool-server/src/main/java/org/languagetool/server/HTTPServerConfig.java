@@ -20,15 +20,10 @@ package org.languagetool.server;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
-import org.languagetool.Experimental;
-import org.languagetool.Language;
-import org.languagetool.Languages;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -44,7 +39,6 @@ public class HTTPServerConfig {
   public static final int DEFAULT_PORT = 8081;
   
   static final String LANGUAGE_MODEL_OPTION = "--languageModel";
-  static final String WORD2VEC_MODEL_OPTION = "--word2vecModel";
 
   protected boolean verbose = false;
   protected boolean publicAccess = false;
@@ -57,9 +51,7 @@ public class HTTPServerConfig {
   protected int maxCheckThreads = 10;
   protected Mode mode;
   protected File languageModelDir = null;
-  protected File word2vecModelDir = null;
   protected int requestLimit;
-  protected int requestLimitInBytes;
   protected int timeoutRequestLimit;
   protected int requestLimitPeriodInSeconds;
   protected boolean trustXForwardForHeader;
@@ -67,10 +59,6 @@ public class HTTPServerConfig {
   protected File rulesConfigFile = null;
   protected int cacheSize = 0;
   protected boolean warmUp = false;
-  protected float maxErrorsPerWordRate = 0;
-  protected String hiddenMatchesServer;
-  protected int hiddenMatchesServerTimeout;
-  protected List<Language> hiddenMatchesLanguages = new ArrayList<>();
 
   /**
    * Create a server configuration for the default port ({@link #DEFAULT_PORT}).
@@ -106,7 +94,7 @@ public class HTTPServerConfig {
       }
       switch (args[i]) {
         case "--config":
-          parseConfigFile(new File(args[++i]), !ArrayUtils.contains(args, LANGUAGE_MODEL_OPTION), !ArrayUtils.contains(args, WORD2VEC_MODEL_OPTION));
+          parseConfigFile(new File(args[++i]), !ArrayUtils.contains(args, LANGUAGE_MODEL_OPTION));
           break;
         case "-p":
         case "--port":
@@ -120,33 +108,19 @@ public class HTTPServerConfig {
           publicAccess = true;
           break;
         case "--allow-origin":
-          try {
-            allowOriginUrl = args[++i];
-            if (allowOriginUrl.startsWith("--")) {
-              throw new IllegalArgumentException("Missing argument for '--allow-origin' (e.g. an URL or '*')");
-            }
-          } catch (ArrayIndexOutOfBoundsException e) {
-            throw new IllegalArgumentException("Missing argument for '--allow-origin' (e.g. an URL or '*')");
+          allowOriginUrl = args[++i];
+          if (allowOriginUrl.startsWith("--")) {
+            throw new IllegalArgumentException("Missing argument for '--allow-origin'");
           }
           break;
         case LANGUAGE_MODEL_OPTION:
           setLanguageModelDirectory(args[++i]);
           break;
-        case WORD2VEC_MODEL_OPTION:
-          setWord2VecModelDirectory(args[++i]);
-          break;
-        default:
-          if (args[i].contains("=")) {
-            System.out.println("WARNING: unknown option: " + args[i] +
-                    " - please note that parameters are given as '--arg param', i.e. without '=' between argument and parameter");
-          } else {
-            System.out.println("WARNING: unknown option: " + args[i]);
-          }
       }
     }
   }
 
-  private void parseConfigFile(File file, boolean loadLangModel, boolean loadWord2VecModel) {
+  private void parseConfigFile(File file, boolean loadLangModel) {
     try {
       Properties props = new Properties();
       try (FileInputStream fis = new FileInputStream(file)) {
@@ -156,7 +130,6 @@ public class HTTPServerConfig {
         secretTokenKey = getOptionalProperty(props, "secretTokenKey", null);
         maxCheckTimeMillis = Long.parseLong(getOptionalProperty(props, "maxCheckTimeMillis", "-1"));
         requestLimit = Integer.parseInt(getOptionalProperty(props, "requestLimit", "0"));
-        requestLimitInBytes = Integer.parseInt(getOptionalProperty(props, "requestLimitInBytes", "0"));
         timeoutRequestLimit = Integer.parseInt(getOptionalProperty(props, "timeoutRequestLimit", "0"));
         requestLimitPeriodInSeconds = Integer.parseInt(getOptionalProperty(props, "requestLimitPeriodInSeconds", "0"));
         trustXForwardForHeader = Boolean.valueOf(getOptionalProperty(props, "trustXForwardForHeader", "false"));
@@ -167,10 +140,6 @@ public class HTTPServerConfig {
         String langModel = getOptionalProperty(props, "languageModel", null);
         if (langModel != null && loadLangModel) {
           setLanguageModelDirectory(langModel);
-        }
-        String word2vecModel = getOptionalProperty(props, "word2vecModel", null);
-        if (word2vecModel != null && loadWord2VecModel) {
-          setWord2VecModelDirectory(word2vecModel);
         }
         maxCheckThreads = Integer.parseInt(getOptionalProperty(props, "maxCheckThreads", "10"));
         if (maxCheckThreads < 1) {
@@ -199,15 +168,6 @@ public class HTTPServerConfig {
         } else {
           throw new IllegalArgumentException("Invalid value for warmUp: '" + warmUpStr + "', use 'true' or 'false'");
         }
-        maxErrorsPerWordRate = Float.parseFloat(getOptionalProperty(props, "maxErrorsPerWordRate", "0"));
-        hiddenMatchesServer = getOptionalProperty(props, "hiddenMatchesServer", null);
-        hiddenMatchesServerTimeout = Integer.parseInt(getOptionalProperty(props, "hiddenMatchesServerTimeout", "1000"));
-        String langCodes = getOptionalProperty(props, "hiddenMatchesLanguages", "");
-        for (String code : langCodes.split(",\\s*")) {
-          if (!code.isEmpty()) {
-            hiddenMatchesLanguages.add(Languages.getLanguageForShortCode(code));
-          }
-        }
       }
     } catch (IOException e) {
       throw new RuntimeException("Could not load properties from '" + file + "'", e);
@@ -218,13 +178,6 @@ public class HTTPServerConfig {
     languageModelDir = new File(langModelDir);
     if (!languageModelDir.exists() || !languageModelDir.isDirectory()) {
       throw new RuntimeException("LanguageModel directory not found or is not a directory: " + languageModelDir);
-    }
-  }
-
-  private void setWord2VecModelDirectory(String w2vModelDir) {
-    word2vecModelDir = new File(w2vModelDir);
-    if (!word2vecModelDir.exists() || !word2vecModelDir.isDirectory()) {
-      throw new RuntimeException("Word2Vec directory not found or is not a directory: " + word2vecModelDir);
     }
   }
 
@@ -308,11 +261,6 @@ public class HTTPServerConfig {
     return timeoutRequestLimit;
   }
 
-  /** @since 4.0 */
-  int getRequestLimitInBytes() {
-    return requestLimitInBytes;
-  }
-
   int getRequestLimitPeriodInSeconds() {
     return requestLimitPeriodInSeconds;
   }
@@ -338,15 +286,6 @@ public class HTTPServerConfig {
   @Nullable
   File getLanguageModelDir() {
     return languageModelDir;
-  }
-
-  /**
-   * Get word2vec model directory (which contains 'en' sub directories and final_embeddings.txt and dictionary.txt) or {@code null}.
-   * @since 4.0
-   */
-  @Nullable
-  File getWord2VecModelDir() {
-    return word2vecModelDir;
   }
 
   /** @since 2.7 */
@@ -396,45 +335,6 @@ public class HTTPServerConfig {
   /** @since 3.7 */
   boolean getWarmUp() {
     return warmUp;
-  }
-
-  /**
-   * Maximum errors per word rate, checking will stop if the rate is higher.
-   * For example, with a rate of 0.33, the checking would stop if the user's
-   * text has so many errors that more than every 3rd word causes a rule match.
-   * Note that this may not apply for very short texts.
-   * @since 4.0
-   */
-  float getMaxErrorsPerWordRate() {
-    return maxErrorsPerWordRate;
-  }
-
-  /**
-   * URL of server that is queried to add additional (but hidden) matches to the result.
-   * @since 4.0
-   */
-  @Nullable
-  @Experimental
-  String getHiddenMatchesServer() {
-    return hiddenMatchesServer;
-  }
-
-  /**
-   * Timeout in milliseconds for querying {@link #getHiddenMatchesServer()}.
-   * @since 4.0
-   */
-  @Experimental
-  int getHiddenMatchesServerTimeout() {
-    return hiddenMatchesServerTimeout;
-  }
-
-  /**
-   * Languages for which {@link #getHiddenMatchesServer()} will be queried.
-   * @since 4.0
-   */
-  @Experimental
-  List<Language> getHiddenMatchesLanguages() {
-    return hiddenMatchesLanguages;
   }
 
   /**

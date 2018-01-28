@@ -25,7 +25,9 @@ import org.languagetool.Languages;
 import org.languagetool.rules.patterns.AbstractPatternRule;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -34,7 +36,7 @@ public class RuleTest {
 
   @Test
   public void testJavaRules() throws IOException {
-    Map<String,String> idsToClassName = new HashMap<>();
+    Set<String> ids = new HashSet<>();
     Set<Class> ruleClasses = new HashSet<>();
     if (Languages.getWithDemoLanguage().size() <= 1) {
       System.err.println("***************************************************************************");
@@ -47,7 +49,7 @@ public class RuleTest {
       List<Rule> allRules = lt.getAllRules();
       for (Rule rule : allRules) {
         if (!(rule instanceof AbstractPatternRule)) {
-          assertIdUniqueness(idsToClassName, ruleClasses, language, rule);
+          assertIdUniqueness(ids, ruleClasses, language, rule);
           assertIdValidity(language, rule);
           assertTrue(rule.supportsLanguage(language));
           testExamples(rule, lt);
@@ -56,13 +58,12 @@ public class RuleTest {
     }
   }
 
-  private void assertIdUniqueness(Map<String,String> ids, Set<Class> ruleClasses, Language language, Rule rule) {
+  private void assertIdUniqueness(Set<String> ids, Set<Class> ruleClasses, Language language, Rule rule) {
     String ruleId = rule.getId();
-    if (ids.containsKey(ruleId) && !ruleClasses.contains(rule.getClass())) {
-      throw new RuntimeException("Rule id occurs more than once: '" + ruleId + "', one of them " +
-              rule.getClass() + ", the other one " + ids.get(ruleId) + ", language: " + language);
+    if (ids.contains(ruleId) && !ruleClasses.contains(rule.getClass())) {
+      throw new RuntimeException("Rule id occurs more than once: '" + ruleId + "', language: " + language);
     }
-    ids.put(ruleId, rule.getClass().getName());
+    ids.add(ruleId);
     ruleClasses.add(rule.getClass());
   }
 

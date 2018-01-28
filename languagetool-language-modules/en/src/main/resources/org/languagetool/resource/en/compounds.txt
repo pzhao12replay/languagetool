@@ -22,8 +22,6 @@ bell-hops+
 bottle-neck+
 bottle-necks+
 breech-loader+
-cork-screw+
-cork-screws+
 cut-throats+
 die-hards+
 drop-head+
@@ -66,7 +64,6 @@ flame-proof+
 flame-proofed+
 flame-proofing+
 fly-paper+
-fore-ground+
 fountain-head+
 fountain-heads+
 fox-hunting+
@@ -108,7 +105,6 @@ home-grown+
 home-maker+
 home-makers+
 home-schooling+
-honey-moon+
 house-mother+
 house-mothers+
 house-parent+
@@ -191,7 +187,6 @@ strait-jacket+
 strait-jacketed+
 strait-jacketing+
 strait-jackets+
-strike-outs+
 sub-group+
 sub-groups+
 sub-headings+
@@ -296,6 +291,7 @@ blood-letting*
 blood-lettings*
 blood-lust*
 blood-money*
+blood-poisoning*
 blow-by-blow*
 blow-dried*
 blow-drier*
@@ -321,7 +317,6 @@ breech-loaded*
 breech-loading*
 bric-a-brac*
 brick-red*
-bride-elect*
 bright-eyed*
 brim-full*
 broad-minded*
@@ -353,7 +348,6 @@ cha-cha*
 chain-smoke*
 chain-smoked*
 chain-smoking*
-chairman-elect*
 Chester-le-Street*
 chicken-hearted*
 chicken-livered*
@@ -550,10 +544,6 @@ ever-changing*
 ever-increasing*
 ex-communist*
 ex-communists*
-ex-girlfriend*
-ex-girlfriends*
-ex-husband*
-ex-husbands*
 ex-mayor*
 ex-partners*
 ex-president*
@@ -1158,6 +1148,7 @@ orang-utan*
 orang-utans*
 out-and-out*
 out-of-body*
+out-of-date*
 out-of-pocket*
 over-anxious*
 over-anxiously*
@@ -1378,6 +1369,7 @@ school-leaver*
 school-leavers*
 school-leaving*
 scot-free*
+second-rate*
 seed-cord*
 seed-eater*
 seed-eaters*
@@ -1678,6 +1670,7 @@ sub-clause*
 sub-clauses*
 Sub-Lt.*
 sub-Saharan*
+such-and-such*
 super-dooper*
 surface-active*
 surface-to-air*
@@ -1753,6 +1746,7 @@ T-junctions*
 toil-worn*
 tom-tom*
 tone-deaf*
+tongue-in-cheek*
 tongue-tied*
 top-heavy*
 top-level*
